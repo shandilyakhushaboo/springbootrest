@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: my-config
+data:
+  cfgname: value-from-configmap
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cfgsecrets-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cfgsecrets-app
+  template:
+    metadata:
+      labels:
+        app: cfgsecrets-app
+    spec:
+      containers:
+      - name: cfgsecrets-app
+        image: newerptestacr.azurecr.io/cfgsecrets-app:latest
+        imagePullPolicy: Always
+        env:
+        - name: CFG_ENV
+        valueFrom:
+          configMapKeyRef:
+            name: my-config
+            key: cfgname
+        ports:
+          - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cfgsecrets-app
+spec:
+  selector:
+    app: cfgsecrets-app
+  type: ClusterIP
+  ports:
+  - port: 8087
+    targetPort: 8080
